@@ -6,6 +6,7 @@ ls with customizable icons and colors, expanded off of ryanoasis' [nerd-fonts](h
 ## Features
 
   - Columnizes output
+  - Windows support! (MinTTY)
   - Contains predefined icons for many file types
   - Has support for additional file type icon descriptions, which are easily added
 
