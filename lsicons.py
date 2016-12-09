@@ -112,6 +112,13 @@ def permissions_to_unix_name(st):
     dic = {'7':'rwx', '6' :'rw-', '5' : 'r-x', '4':'r--', '0': '---'}
     perm = str(oct(st.st_mode)[-3:])
     return is_dir + ''.join(dic.get(x,x) for x in perm)
+
+def get_user_name(file_stat):
+    try:
+        return getpwuid(file_stat.st_uid).pw_name
+    except KeyError:
+        return ""
+
 def get_file_size(file_stat):
     size = file_stat.st_size
     if size <= 1024:
@@ -159,7 +166,7 @@ if __name__ == '__main__':
             file_stat = os.stat(f)
             file_line = ("%s\t%s\t%s\t%s") % (file_line,
                                     permissions_to_unix_name(file_stat),
-                                    getpwuid(file_stat.st_uid).pw_name,
+                                    get_user_name(file_stat),
                                     get_file_size(file_stat))
 
         formattedfiles.append((file_line, file_color))
