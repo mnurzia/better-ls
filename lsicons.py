@@ -5,10 +5,11 @@ import os
 import subprocess, glob
 import stat
 from pwd import getpwuid
-
+from  optparse import OptionParser
+import sys
 #File extension descriptions.
 #Format: "EXTENSION": [u"ICON","COLOR CODE"]
-extensions = {":FILE":	[u"","216"],
+EXTENSIONS = {":FILE":	[u"","216"],
     ":DIRECTORY":	[u"","159"],
     "7z":			[u"","229"],
     "ai":			[u"","252"],
@@ -127,46 +128,55 @@ def get_file_size(file_stat):
 
     return "%dGB" % size
 
-files = glob.glob("*")
-formattedfiles = []
+if __name__ == '__main__':
 
-for f in sorted(files,key=lambda v: v.upper(),):
-    file_line = ''
-    file_color = ''
-    if path.isfile(f):
-        (name,ext) = path.splitext(f)
-        ext = ext.replace(".","")
-        if ext in extensions:
-            file_line = ("%s %s" % (extensions[ext][0],f))
-            file_color = colorfmt(extensions[ext][1])
-        if ext not in extensions:
-            file_line = ("%s %s" % (extensions[u":FILE"][0],f))
-            file_color = colorfmt(extensions[u":FILE"][1])
+    print sys.argv
+
+    parser = OptionParser()
+    parser.add_option("-l", "--list", action="store_true", default=False, dest="is_list")
+    parser.add_option("-d", "--dir", dest="dir", default='')
+    (options, args) = parser.parse_args()
+
+    files = glob.glob(options.dir + '*')
+    formattedfiles = []
+
+    for f in sorted(files,key=lambda v: v.upper(),):
+        file_line = ''
+        file_color = ''
+        if path.isfile(f):
+            (name,ext) = path.splitext(f)
+            ext = ext.replace(".","")
+            if ext in EXTENSIONS:
+                file_line = ("%s %s" % (EXTENSIONS[ext][0],f))
+                file_color = colorfmt(EXTENSIONS[ext][1])
+            if ext not in EXTENSIONS:
+                file_line = ("%s %s" % (EXTENSIONS[u":FILE"][0],f))
+                file_color = colorfmt(EXTENSIONS[u":FILE"][1])
+        else:
+            file_line = ("%s %s" % (EXTENSIONS[u":DIRECTORY"][0],f))
+            file_color = colorfmt(EXTENSIONS[u":DIRECTORY"][1])
+        if options.is_list:
+            file_stat = os.stat(f)
+            file_line = ("%s\t%s\t%s\t%s") % (file_line,
+                                    permissions_to_unix_name(file_stat),
+                                    getpwuid(file_stat.st_uid).pw_name,
+                                    get_file_size(file_stat))
+
+        formattedfiles.append((file_line, file_color))
+    fstr = ''
+    for f in formattedfiles:
+        fstr += f[0]+"\n"
+
+    #Temporary file because I can't pipe the string to column yet - limitation (hdd speed)
+    tmpfile = open("lsfile","w")
+    tmpfile.write(str(fstr.encode('utf-8')))
+    tmpfile.close()
+    if not options.is_list:
+        output = subprocess.check_output("cat lsfile | column -c $(tput cols); rm -rf lsfile",shell=True).decode('utf-8') # Yes, I know I'm using shell=True. One reason why you SHOULD NOT give this program full permissions.
     else:
-        file_line = ("%s %s" % (extensions[u":DIRECTORY"][0],f))
-        file_color = colorfmt(extensions[u":DIRECTORY"][1])
-    if True:
-        file_stat = os.stat(f)
-        file_line = ("%s\t%s\t%s\t%s") % (file_line,
-                                  permissions_to_unix_name(file_stat),
-                                  getpwuid(file_stat.st_uid).pw_name,
-                                  get_file_size(file_stat))
+        output = fstr
 
-    formattedfiles.append((file_line, file_color))
-fstr = ''
-for f in formattedfiles:
-    fstr += f[0]+"\n"
+    for f in formattedfiles:
+        output = output.replace(f[0],f[1]+f[0])
 
-#Temporary file because I can't pipe the string to column yet - limitation (hdd speed)
-tmpfile = open("lsfile","w")
-tmpfile.write(str(fstr.encode('utf-8')))
-tmpfile.close()
-if False:
-    output = subprocess.check_output("cat lsfile | column -c $(tput cols); rm -rf lsfile",shell=True).decode('utf-8') # Yes, I know I'm using shell=True. One reason why you SHOULD NOT give this program full permissions.
-else:
-    output = fstr
-
-for f in formattedfiles:
-    output = output.replace(f[0],f[1]+f[0])
-
-print(output.strip('\n'))
+    print(output.strip('\n'))
