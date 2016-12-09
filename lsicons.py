@@ -122,23 +122,20 @@ def get_user_name(file_stat):
 def get_file_size(file_stat):
     size = file_stat.st_size
     if size <= 1024:
-        return "%dB" % size
+        return "%d B" % size
     size /= 1024
 
     if size <= 1024:
-        return "%dKB" % size
+        return "%d KB" % size
     size /= 1024
 
     if size <= 1024:
-        return "%dMB" % size
+        return "%d MB" % size
     size /= 1024
 
-    return "%dGB" % size
+    return "%d GB" % size
 
 if __name__ == '__main__':
-
-    print sys.argv
-
     parser = OptionParser()
     parser.add_option("-l", "--list", action="store_true", default=False, dest="is_list")
     parser.add_option("-d", "--dir", dest="dir", default='')
@@ -163,12 +160,14 @@ if __name__ == '__main__':
             file_line = ("%s %s" % (EXTENSIONS[u":DIRECTORY"][0],f))
             file_color = colorfmt(EXTENSIONS[u":DIRECTORY"][1])
         if options.is_list:
-            file_stat = os.stat(f)
-            file_line = ("%s\t%s\t%s\t%s") % (file_line,
+            try:
+                file_stat = os.stat(f)
+                file_line = u"{:<15}{:<10}{:<10}{}".format(
                                     permissions_to_unix_name(file_stat),
                                     get_user_name(file_stat),
-                                    get_file_size(file_stat))
-
+                                    get_file_size(file_stat),file_line)
+            except OSError:
+                file_line = f
         formattedfiles.append((file_line, file_color))
     fstr = ''
     for f in formattedfiles:
