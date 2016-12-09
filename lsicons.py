@@ -127,6 +127,12 @@ tmpfile.close()
 output = subprocess.check_output("cat lsfile | column -c $(tput cols); rm -rf lsfile",shell=True).decode('utf-8') # Yes, I know I'm using shell=True. One reason why you SHOULD NOT give this program full permissions.
 
 for f in formattedfiles:
+    try:
+        # Python 2
+        f = [x.decode('utf8') for x in f]
+    except AttributeError:
+        # Python 3
+        pass
     output = output.replace(f[0],f[1]+f[0])
 
 print(output.strip('\n'))
