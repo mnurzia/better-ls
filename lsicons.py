@@ -7,6 +7,8 @@ import glob
 import stat
 from pwd import getpwuid
 from optparse import OptionParser
+
+
 # File extension descriptions.
 # Format: "EXTENSION": [u"ICON","COLOR CODE"]
 EXTENSIONS = {":FILE":	[u"", "216"],
@@ -145,7 +147,7 @@ if __name__ == '__main__':
     parser.add_option("-d", "--dir", dest="dir", default='')
     (options, args) = parser.parse_args()
 
-    files = glob.glob(options.dir + '*')
+    files = glob.glob(options.dir + '.*') + glob.glob(options.dir + '*')
     formattedfiles = []
 
     for f in sorted(files, key=lambda v: v.upper(),):
